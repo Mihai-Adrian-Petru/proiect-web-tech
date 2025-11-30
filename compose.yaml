@@ -1,0 +1,79 @@
+services:
+  # backend:
+  #   image: maven:3.9.11-eclipse-temurin-21
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - db
+  #   working_dir: /workspace/backend
+  #   volumes:
+  #     - ./backend:/workspace/backend
+  #     - maven-repo:/root/.m2
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=dev
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/lecturepolls
+  #     - SPRING_DATASOURCE_USERNAME=lecturepolls
+  #     - SPRING_DATASOURCE_PASSWORD=lecturepolls
+  #     - FRONTEND_URL=http://localhost:5173
+  #     - GOOGLE_REDIRECT_URL=http://localhost:8080/auth/google/callback
+  #     - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+  #     - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+  #   ports:
+  #     - "8080:8080"
+  #     - "5005:5005"
+  #   command:
+  #     - mvn
+  #     - spring-boot:run
+  #     - -Dspring-boot.run.fork=false
+  #     - -DskipTests
+  #     - -Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  #   profiles:
+  #     - dev
+
+  # frontend:
+  #   image: node:22-alpine
+  #   working_dir: /app
+  #   command: sh -c "npm install && npm run dev -- --host"
+  #   volumes:
+  #     - node-mod:/app/node_modules
+  #   ports:
+  #     - "5173:5173"
+  #   depends_on:
+  #     - backend
+  #   develop:
+  #     watch:
+  #       - action: sync
+  #         path: ./frontend
+  #         initial_sync: true
+  #         target: /app
+  #         ignore:
+  #           - node_modules/
+  #       - action: sync+restart
+  #         path: ./frontend/package.json
+  #         initial_sync: true
+  #         target: /app/package.json
+  #   profiles: [ "dev" ]
+
+  breaking_bad_db:
+    image: mysql:8.1
+    environment:
+      - MYSQL_ROOT_PASSWORD=breaking_bad_root
+      - MYSQL_DATABASE=breaking_bad
+      - MYSQL_USER=breaking_bad
+      - MYSQL_PASSWORD=breaking_bad
+    ports:
+      - "3306:3306"
+    volumes:
+      - breaking_bad_mysql_data:/var/lib/mysql
+      - ./breaking_bad.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles: [ "dev", "liquibase" ]
+
+volumes:
+  maven-repo:
+  node-mod:
+  breaking_bad_mysql_data:
