@@ -1,11 +1,11 @@
 package stud.etti.webtech.controller;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import stud.etti.webtech.model.Character;
 import stud.etti.webtech.service.CharacterService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/characters")
@@ -18,10 +18,8 @@ public class BreakingBadController {
     }
 
     @GetMapping
-    public Page<Character> getAllCharacters(
-            @RequestParam(required = false) String search,
-            Pageable pageable) {
-        return characterService.getCharacters(search, pageable);
+    public List<Character> getAllCharacters() {
+        return characterService.getAllCharacters();
     }
 
     @GetMapping("/{id}")
@@ -50,4 +48,3 @@ public class BreakingBadController {
         return ResponseEntity.noContent().build();
     }
 }
-

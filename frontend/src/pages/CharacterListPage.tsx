@@ -1,99 +1,79 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Alert, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router';
-import { type Character } from '../types/Character';
-import { getCharacters } from '../api';
-import CharacterTable from '../components/CharacterTable';
-import EditCharacterModal from '../components/EditCharacterModal';
+import React, { useState, useMemo } from "react";
+import { Container, Alert } from "react-bootstrap";
+import { useNavigate } from "react-router";
+import { type Character } from "../types/Character";
+import { useCharacters } from "../context/CharacterContext";
+import CharacterTable from "../components/CharacterTable";
 
 const CharacterListPage: React.FC = () => {
-    const [characters, setCharacters] = useState<Character[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [totalPages, setTotalPages] = useState<number>(0);
-    const [searchQuery, setSearchQuery] = useState<string>('');
-    const [showEditModal, setShowEditModal] = useState<boolean>(false);
-    const [characterToEdit, setCharacterToEdit] = useState<Character | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
-    
-    const navigate = useNavigate();
+  const {
+    characters: allCharacters,
+    loading,
+    error,
+    refresh,
+  } = useCharacters();
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 10;
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const data = await getCharacters(currentPage - 1, 10, searchQuery);
-                setCharacters(data.content);
-                setTotalPages(data.totalPages);
-                setLoading(false);
-                setError(null);
-            } catch (err) {
-                console.error(err);
-                setError('Failed to fetch characters. Please ensure the backend is running.');
-                setLoading(false);
-            }
-        };
+  const navigate = useNavigate();
 
-        const timeoutId = setTimeout(() => {
-            fetchData();
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [currentPage, searchQuery, refreshKey]);
-
-    const handleViewDetails = (character: Character) => {
-        navigate(`/characters/${character.id}`);
-    };
-
-    const handleEdit = (character: Character) => {
-        setCharacterToEdit(character);
-        setShowEditModal(true);
-    };
-
-    const handleCloseEditModal = () => {
-        setShowEditModal(false);
-        setCharacterToEdit(null);
-    };
-
-    const handleSaveEdit = () => {
-        setRefreshKey(prev => prev + 1);
-    };
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
-
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        setCurrentPage(1);
-    };
-
-    return (
-        <Container className="py-5">
-            {error && <Alert variant="danger">{error}</Alert>}
-
-            {!error && (
-                <CharacterTable 
-                    characters={characters} 
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    onViewDetails={handleViewDetails}
-                    onEdit={handleEdit}
-                    onSearch={handleSearch}
-                    loading={loading}
-                />
-            )}
-
-            <EditCharacterModal 
-                character={characterToEdit} 
-                show={showEditModal} 
-                onHide={handleCloseEditModal} 
-                onSave={handleSaveEdit}
-            />
-        </Container>
+  // Client-side filtering
+  const filteredCharacters = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return allCharacters;
+    }
+    const lowerQuery = searchQuery.toLowerCase();
+    return allCharacters.filter(
+      (character) =>
+        character.name?.toLowerCase().includes(lowerQuery) ||
+        character.nickname?.toLowerCase().includes(lowerQuery) ||
+        character.portrayed?.toLowerCase().includes(lowerQuery)
     );
+  }, [allCharacters, searchQuery]);
+
+  // Client-side pagination
+  const totalPages = Math.ceil(filteredCharacters.length / pageSize);
+  const paginatedCharacters = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredCharacters.slice(start, start + pageSize);
+  }, [filteredCharacters, currentPage, pageSize]);
+
+  const handleViewDetails = (character: Character) => {
+    navigate(`/characters/${character.id}`);
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  const handleRefresh = () => {
+    refresh();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  return (
+    <Container className="py-5">
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      {!error && (
+        <CharacterTable
+          characters={paginatedCharacters}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          onViewDetails={handleViewDetails}
+          onSearch={handleSearch}
+          onRefresh={handleRefresh}
+          loading={loading}
+        />
+      )}
+    </Container>
+  );
 };
 
 export default CharacterListPage;

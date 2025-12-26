@@ -1,2 +1,1 @@
-export * from "./Character"
-export * from "./Page"
+export * from "./Character";
