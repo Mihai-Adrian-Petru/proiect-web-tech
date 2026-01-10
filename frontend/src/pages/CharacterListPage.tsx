@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { Container, Alert } from "react-bootstrap";
+import { Container, Alert, Button } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import { type Character } from "../types/Character";
 import { useCharacters } from "../context/CharacterContext";
 import CharacterTable from "../components/CharacterTable";
+import AddCharacterModal from "../components/AddCharacterModal";
+import { useUser } from "../context/UserContext";
 
 const CharacterListPage: React.FC = () => {
   const {
@@ -12,8 +14,10 @@ const CharacterListPage: React.FC = () => {
     error,
     refresh,
   } = useCharacters();
+  const { isLoggedIn } = useUser();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const pageSize = 10;
 
   const navigate = useNavigate();
@@ -60,6 +64,18 @@ const CharacterListPage: React.FC = () => {
     <Container className="py-5">
       {error && <Alert variant="danger">{error}</Alert>}
 
+      {isLoggedIn && (
+        <div className="d-flex justify-content-end mb-3">
+          <Button
+            variant="success"
+            onClick={() => setShowAddModal(true)}
+            disabled={loading}
+          >
+            + Add Character
+          </Button>
+        </div>
+      )}
+
       {!error && (
         <CharacterTable
           characters={paginatedCharacters}
@@ -72,6 +88,14 @@ const CharacterListPage: React.FC = () => {
           loading={loading}
         />
       )}
+
+      <AddCharacterModal
+        show={showAddModal}
+        onHide={() => setShowAddModal(false)}
+        onCreated={async () => {
+          await refresh();
+        }}
+      />
     </Container>
   );
 };

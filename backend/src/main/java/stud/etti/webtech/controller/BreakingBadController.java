@@ -1,6 +1,7 @@
 package stud.etti.webtech.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import stud.etti.webtech.model.Character;
 import stud.etti.webtech.service.CharacterService;
@@ -20,6 +21,12 @@ public class BreakingBadController {
     @GetMapping
     public List<Character> getAllCharacters() {
         return characterService.getAllCharacters();
+    }
+
+    @PostMapping
+    public ResponseEntity<Character> createCharacter(@RequestBody Character character) {
+        Character created = characterService.createCharacter(character);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{id}")

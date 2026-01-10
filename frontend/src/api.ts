@@ -3,6 +3,8 @@ import { type Character } from "./types/Character";
 
 const API_URL = "http://localhost:8080/api/characters";
 
+export type CreateCharacterRequest = Omit<Character, "id">;
+
 // Ensure cookies are sent with requests
 axios.defaults.withCredentials = true;
 
@@ -13,6 +15,13 @@ export const getCharacters = async (): Promise<Character[]> => {
 
 export const getCharacterById = async (id: number): Promise<Character> => {
   const response = await axios.get<Character>(`${API_URL}/${id}`);
+  return response.data;
+};
+
+export const createCharacter = async (
+  character: CreateCharacterRequest
+): Promise<Character> => {
+  const response = await axios.post<Character>(API_URL, character);
   return response.data;
 };
 

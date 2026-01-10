@@ -6,7 +6,9 @@ import stud.etti.webtech.model.Character;
 import stud.etti.webtech.repository.BreakingBadRepository;
 import stud.etti.webtech.utils.CharacterMapper;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +50,24 @@ public class CharacterService {
             BreakingBadData savedData = repository.save(existingData);
             return mapper.toCharacter(savedData);
         }).orElse(null);
+    }
+
+    public Character createCharacter(Character newCharacter) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", newCharacter.getName());
+        data.put("birthday", newCharacter.getBirthday());
+        data.put("occupation", newCharacter.getOccupation());
+        data.put("status", newCharacter.getStatus());
+        data.put("nickname", newCharacter.getNickname());
+        data.put("portrayed", newCharacter.getPortrayed());
+        data.put("appearance", newCharacter.getAppearance());
+        data.put("image", newCharacter.getImage());
+
+        BreakingBadData entity = new BreakingBadData();
+        entity.setData(data);
+
+        BreakingBadData savedData = repository.save(entity);
+        return mapper.toCharacter(savedData);
     }
 
     public void deleteCharacter(Long id) {
